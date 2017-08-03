@@ -63,14 +63,27 @@ try:
 except ImportError:
     HAS_REDIS = False
 
+try:
+    from rediscluster import StrictRedisCluster
+    HAS_REDIS_CLUSTER = True
+except ImportError:
+    HAS_REDIS_CLUSTER = False
+
+
 # Define the module's virtual name
 __virtualname__ = 'redis'
 
 
 def __virtual__():
+   '''
+   The redis redis cluster library must be installed if cluster mode is True
+   '''
+
     if not HAS_REDIS:
         return False, 'Could not import redis returner; ' \
                       'redis python client is not installed.'
+    if not HAS_REDIS_CLUSTER and _get_redis_cache_opts()['cluster_mode']:
+        return (False, "Please install the redis-py-cluster package.")
     return __virtualname__
 
 
@@ -80,13 +93,20 @@ def _get_options(ret=None):
     '''
     attrs = {'host': 'host',
              'port': 'port',
-             'db': 'db'}
+             'db': 'db',
+             'cluster_mode': 'cluster_mode',
+             'startup_nodes': 'startup_nodes',
+             'skip_full_coverage_check': 'skip_full_coverage_check',
+        }
 
     if salt.utils.is_proxy():
         return {
             'host': __opts__.get('redis.host', 'salt'),
             'port': __opts__.get('redis.port', 6379),
-            'db': __opts__.get('redis.db', '0')
+            'db': __opts__.get('redis.db', '0'),
+            'cluster_mode': __opts__.get('redis.cluster_mode', False),
+            'startup_nodes': __opts__.get('redis.startup_nodes', {}),
+            'skip_full_coverage_check': __opts__.get('redis.skip_full_coverage_check', False)
         }
 
     _options = salt.returners.get_returner_options(__virtualname__,
@@ -105,12 +125,20 @@ def _get_serv(ret=None):
     host = _options.get('host')
     port = _options.get('port')
     db = _options.get('db')
+    cluster_mode = _options.get('cluster_mode')
+    startup_nodes = _options.get('startup_nodes')
+    skip_full_coverage_check = _options.get('skip_full_coverage_check')
 
-    return redis.Redis(
-            host=host,
-            port=port,
-            db=db)
-
+    if opts['cluster_mode']:
+        return StrictRedisCluster(startup_nodes=opts['startup_nodes'],
+                                  skip_full_coverage_check=opts['skip_full_coverage_check'],
+                                  decode_responses=True)
+    else:
+        return redis.Redis(
+                host=host,
+                port=port,
+                db=db)
+           
 
 def _get_ttl():
     return __opts__.get('keep_jobs', 24) * 3600
