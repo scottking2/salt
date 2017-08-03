@@ -44,6 +44,15 @@ To override individual configuration items, append --return_kwargs '{"key:": "va
 
     salt '*' test.ping --return redis --return_kwargs '{"db": "another-salt"}'
 
+cluster_mode:
+    set cluster_mode to True to add AWS cluster.
+
+start_nodes:
+    enter your nodes that you need started.
+
+skip_full_coverage_check:
+    set to True to skip full coverage check. 
+
 '''
 
 # Import python libs

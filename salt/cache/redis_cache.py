@@ -77,6 +77,15 @@ db: ``'0'``
 password:
     Redis connection password.
 
+cluster_mode:
+    set cluster_mode to True to add AWS cluster.
+
+start_nodes:
+    enter your nodes that you need started.
+
+skip_full_coverage_check:
+    set to True to skip full coverage check. 
+
 Configuration Example:
 
 .. code-block::yaml
@@ -89,6 +98,9 @@ Configuration Example:
     cache.redis.bank_keys_prefix: #BANKEYS
     cache.redis.key_prefix: #KEY
     cache.redis.separator: '@'
+    cache.redis.cluster_mode: False
+    cache.redis.start_nodes: {}
+    cache.redis.skip_full_coverage_check: False
 '''
 
 from __future__ import absolute_import
